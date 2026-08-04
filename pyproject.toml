@@ -17,7 +17,7 @@ keywords = [
     "sdk",
     "async",
     "sync",
-    "httpx",
+    "aiohttp",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -34,14 +34,24 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "httpx>=0.27",
-    "pydantic>=2.7",
+    # aiohttp drives the async engine, requests drives the sync one. aiohttp has no synchronous
+    # API, so a second client is unavoidable once it is the async transport.
+    "aiohttp>=3.9",
+    "requests>=2.31",
 ]
 
 [project.optional-dependencies]
-sync = []
-async = []
-all = ["payment-gateways-sdk[sync,async]"]
+# Both engines ship in the base package, and so does every gateway. This extra covers the one
+# thing the stdlib cannot do — Sadad's 3DES request signing — and is optional so a deployment that
+# does not use Sadad carries no crypto library it never calls.
+sadad = ["pycryptodome>=3.20"]
+# Parsian is the only SOAP gateway. zeep's `async` extra supplies the async transport that
+# ParsianAsync awaits; it pulls in httpx, which is zeep's own async client.
+parsian = ["zeep[async]>=4.2"]
+# SOCKS proxies (Parsian's optional `proxy` credential) need a SOCKS-capable client on both
+# engines. Plain http:// and https:// proxies work without this.
+socks = ["httpx[socks]>=0.27", "requests[socks]>=2.31"]
+all = ["payment-gateways-sdk[parsian,sadad,socks]"]
 
 [project.urls]
 Homepage = "https://github.com/stupidprogrammer4/payment-gateways-sdk"
@@ -51,6 +61,7 @@ Issues = "https://github.com/stupidprogrammer4/payment-gateways-sdk/issues"
 [dependency-groups]
 dev = [
     "mypy>=1.11",
+    "pyright>=1.1.380",
     "pre-commit>=3.7",
     "ruff>=0.6",
     { include-group = "test" },
@@ -61,23 +72,23 @@ test = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "pytest-cov>=5.0",
-    "respx>=0.21",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/payment_gateways_sdk"]
+packages = ["payment_gateways_sdk"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/src",
+    "/payment_gateways_sdk",
     "/tests",
+    "/main.py",
     "/README.md",
 ]
 
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-src = ["src", "tests"]
+src = ["."]
 
 [tool.ruff.lint]
 select = [
@@ -90,9 +101,11 @@ select = [
     "UP",   # pyupgrade
     "ASYNC",# flake8-async
     "S",    # flake8-bandit
+    "BLE",  # flake8-blind-except — a bare `except Exception` on the money path must be deliberate
     "SIM",  # flake8-simplify
     "TCH",  # flake8-type-checking
     "RUF",  # ruff-specific rules
+    "PLC0415",  # import-outside-top-level — optional deps are lazy on purpose, and say so
 ]
 ignore = [
     "S101",  # assert is fine in tests
@@ -110,18 +123,27 @@ docstring-code-format = true
 
 [tool.mypy]
 python_version = "3.10"
-files = ["src", "tests"]
+files = ["payment_gateways_sdk", "tests", "main.py"]
 strict = true
 warn_unreachable = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 no_implicit_optional = true
 show_error_codes = true
-plugins = ["pydantic.mypy"]
 
+# pycryptodome ships no type information and is imported lazily inside a function, so
+# type-checking must give the same answer whether or not the `sadad` extra is installed —
+# otherwise `mypy` passes on a bare checkout and fails once someone installs it, which is the
+# worst way to find out.
 [[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
+module = ["Crypto.*", "zeep.*"]
+ignore_missing_imports = true
+
+# zeep ships no type information, so its Client/AsyncClient/Transport constructors read as
+# untyped. Only this module touches them, and it narrows everything they return at the boundary.
+[[tool.mypy.overrides]]
+module = "payment_gateways_sdk.gateways.parsian.helpers"
+disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 minversion = "8.0"
@@ -139,7 +161,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/payment_gateways_sdk"]
+source = ["payment_gateways_sdk"]
 branch = true
 parallel = true
 
@@ -152,3 +174,15 @@ exclude_lines = [
     "raise NotImplementedError",
     "@overload",
 ]
+
+[tool.pyright]
+include = ["payment_gateways_sdk", "tests", "main.py"]
+pythonVersion = "3.10"
+typeCheckingMode = "strict"
+# zeep ships no type information, so every value that comes back from it is Unknown. The gateway
+# narrows those at its boundary (`as_int`/`as_text` return typed optionals), which is where the
+# guarantee actually belongs.
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
