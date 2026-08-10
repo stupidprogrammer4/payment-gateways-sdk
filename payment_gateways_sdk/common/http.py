@@ -1,20 +1,3 @@
-"""One JSON round-trip, in both flavours, shared by every REST gateway.
-
-Six of the seven gateways speak REST/JSON and differ only in URL, payload and headers, so the
-transport lives here once. Keeping it in one place is also what stops the async engine from
-quietly growing a blocking call: a synchronous request inside a coroutine parks the entire event
-loop for up to the timeout, so one slow gateway stalls every other request in the process, not just
-the payer's.
-
-**Two clients, on purpose.** ``aiohttp`` drives the async engine and has no synchronous API, so the
-sync engine uses ``requests``. Both are normalised here — same arguments, same return type, same
-errors — so nothing above this module can tell which one ran.
-
-Both functions raise :class:`NetworkError` for anything that stopped the round-trip from
-completing. Callers on the verify path catch it and return a failed
-:class:`~payment_gateways_sdk.common.data.VerificationResult` instead.
-"""
-
 import asyncio
 import json
 from typing import Any
@@ -29,17 +12,6 @@ JSON_HEADERS = {"Content-Type": "application/json"}
 
 
 def _decode(text: str, status: int, gateway: str) -> dict[str, Any]:
-    """Decode a gateway response into a dict, or say precisely what arrived instead.
-
-    The body is parsed from text rather than through the client's own JSON helper, because several
-    of these gateways answer JSON while declaring ``text/html`` or no content type at all —
-    ``aiohttp`` refuses those by default, and a payment is not the place to discover it.
-
-    The HTTP status deliberately decides nothing on its own: gateways here report business
-    failures — declined, bad terminal, duplicate — in the *body* of a 200. Each gateway reads its
-    own status field. A 4xx/5xx usually means the request never reached the gateway's own code, and
-    shows up as a body that will not parse.
-    """
     try:
         data = json.loads(text)
     except ValueError as exc:

@@ -1,14 +1,3 @@
-"""Parsian against a real SOAP server, over a real socket, with a real WSDL. No mocking.
-
-``zeep`` is the SOAP layer, and zeep is driven entirely by the WSDL: it builds the request body
-from the schema, so a field the SDK sends under the wrong name or the wrong type fails while zeep
-serialises rather than at the bank. That makes a served WSDL the only honest way to test this —
-a mocked transport would never exercise the part that actually decides what goes on the wire.
-
-So this module serves PEC's two contracts (``tests/wsdl.py``) from an ASMX-shaped HTTP server on a
-real port, lets zeep fetch and parse them, and drives both engines end to end against it.
-"""
-
 import asyncio
 import re
 import threading
@@ -188,9 +177,6 @@ def pec(monkeypatch: pytest.MonkeyPatch) -> Iterator[Recorder]:
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
-    # zeep caches parsed WSDLs per client, and the SDK caches clients per (wsdl, proxy). Each test
-    # gets a fresh port, so the cache has to be cleared or it would answer with the previous run's
-    # client — pointing at a server that is already shut down.
     parsian_helpers.clear_client_cache()
     for module in (parsian_sync, parsian_async):
         monkeypatch.setattr(module, "SALE_WSDL", f"{base}{SALE_PATH}?wsdl")
@@ -220,11 +206,6 @@ def a_verification(authority: str = "90100200", **extra: object) -> PaymentVerif
     return PaymentVerification(
         authority=authority, amount=AMOUNT, order_id=ORDER_ID, extra=dict(extra)
     )
-
-
-# ---------------------------------------------------------------------------------------------
-# The wire format a real SOAP server accepts
-# ---------------------------------------------------------------------------------------------
 
 
 def test_zeep_fetches_the_wsdl_and_sends_an_accepted_request(pec: Recorder) -> None:
@@ -295,11 +276,6 @@ def test_confirm_request_is_scoped_to_the_token(pec: Recorder) -> None:
     assert sent["fields"] == {"LoginAccount": PIN, "Token": "90100200"}
 
 
-# ---------------------------------------------------------------------------------------------
-# Both engines, end to end
-# ---------------------------------------------------------------------------------------------
-
-
 def test_full_payment_cycle_sync(pec: Recorder) -> None:
     gateway = ParsianSync(pin=PIN)
     payment = gateway.make_payment_request(a_request())
@@ -321,18 +297,7 @@ async def test_full_payment_cycle_async(pec: Recorder) -> None:
     assert [r["operation"] for r in pec.requests] == ["SalePaymentRequest", "ConfirmPayment"]
 
 
-# ---------------------------------------------------------------------------------------------
-# The async engine is actually async
-# ---------------------------------------------------------------------------------------------
-
-
 async def test_concurrent_soap_calls_do_not_serialise(pec: Recorder) -> None:
-    """Eight calls against a server that sleeps 300ms each.
-
-    Serialised that is 2.4 seconds; concurrently it is a shade over 300ms. The client is warmed up
-    first so the blocking WSDL parse is not being measured — that cost is real, but it is paid once
-    per process, not per payment.
-    """
     gateway = ParsianAsync(pin=PIN)
     gateway.warm_up()
     pec.delay = 0.3
@@ -378,11 +343,6 @@ def test_the_wsdl_is_parsed_once_per_process_not_once_per_payment(pec: Recorder)
         gateway.make_payment_request(a_request(order_id=str(5000 + i)))
     assert len(pec.requests) == 4
     assert pec.wsdl_fetches == 1, f"the WSDL was fetched {pec.wsdl_fetches} times"
-
-
-# ---------------------------------------------------------------------------------------------
-# What a real server does when things go wrong
-# ---------------------------------------------------------------------------------------------
 
 
 def test_gateway_decline_over_the_wire(pec: Recorder) -> None:
@@ -432,11 +392,6 @@ def test_a_non_numeric_order_id_is_refused_before_any_call(pec: Recorder) -> Non
 def test_parsian_needs_a_pin() -> None:
     with pytest.raises(ConfigurationError, match="pin"):
         ParsianSync(pin="")
-
-
-# ---------------------------------------------------------------------------------------------
-# The callback still guards the confirm call
-# ---------------------------------------------------------------------------------------------
 
 
 def test_a_declined_callback_stops_the_confirm_call_reaching_the_server(pec: Recorder) -> None:

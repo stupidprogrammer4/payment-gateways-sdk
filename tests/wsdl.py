@@ -1,14 +1,3 @@
-"""Real WSDL documents for PEC's two services, for the live SOAP tests to serve.
-
-These are the actual contracts ``zeep`` has to read: the same target namespaces, the same
-``requestData`` wrapper, and the same field types PEC declares — ``OrderId`` and ``Token`` as
-``long``, ``Status`` as ``int``. That matters, because ``zeep`` builds the request body *from the
-schema*: if the SDK sent a string where the WSDL says ``long``, zeep would raise while serialising
-rather than at the bank, and only a real WSDL surfaces that.
-
-``{endpoint}`` is filled in with the test server's address so zeep posts back to it.
-"""
-
 SALE_NS = "https://pec.shaparak.ir/NewIPGServices/Sale/SaleService"
 CONFIRM_NS = "https://pec.shaparak.ir/NewIPGServices/Confirm/ConfirmService"
 

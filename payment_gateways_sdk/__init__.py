@@ -1,25 +1,3 @@
-"""A unified SDK for Iranian payment gateways, in a sync and an async flavour.
-
-Seven gateways — ZarinPal, Zibal, Yektapay, Top, Sepehr, Sadad and Parsian — behind one pair of
-interfaces. Every gateway ships ``<Name>Sync`` and ``<Name>Async`` with the same two methods,
-:meth:`make_payment_request` and :meth:`verify_payment`, taking and returning the same types.
-
-Amounts are in **Rial** everywhere.
-
-    from payment_gateways_sdk import PaymentRequest, ZarinpalSync
-
-    gateway = ZarinpalSync(merchant_id="…")
-    payment = gateway.make_payment_request(
-        PaymentRequest(amount=50_000, callback_url="https://example.com/cb", order_id="1001")
-    )
-    print(payment.redirect_url)
-
-Each gateway package is laid out the same way: ``constants.py`` (endpoints and the fixed values its
-protocol defines), ``data.py`` (credentials and the gateway's own result records — dataclasses
-only), ``helpers.py`` (the pure functions that build payloads and read responses), and
-``sync_engine.py`` / ``async_engine.py``.
-"""
-
 from payment_gateways_sdk.common.data import GatewayDetails as GatewayDetails
 from payment_gateways_sdk.common.data import PaymentRequest as PaymentRequest
 from payment_gateways_sdk.common.data import PaymentResponse as PaymentResponse

@@ -107,9 +107,6 @@ def parse_verify_response(raw: dict[str, Any], data: PaymentVerification) -> Ver
             raw=raw,
             details=details,
         )
-    # ConfirmPurchase is scoped to (token, MerchantOrderId) — both ours — so it cannot confirm
-    # somebody else's transaction. It does not echo a settled amount, so there is nothing here to
-    # compare; if a later version carries one it is still checked.
     body = _body(raw)
     settled_amount, reason = check_amount(
         body.get("amount") or body.get("Amount"), data.amount, gateway=NAME, required=False

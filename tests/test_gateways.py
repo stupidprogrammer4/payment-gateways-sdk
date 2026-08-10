@@ -1,11 +1,3 @@
-"""Every REST gateway, both engines, against a real HTTP server.
-
-No mocking: the ``stub`` fixture in ``conftest.py`` is an actual server on an actual port, so these
-tests see the bytes the SDK put on the wire. Each gateway is exercised through its sync class and
-its async class with the same fixtures, which is what keeps the two engines from drifting apart —
-a change that breaks one and not the other shows up here rather than in production.
-"""
-
 import asyncio
 
 import pytest
@@ -58,11 +50,6 @@ def a_verification(authority: str, amount: int = AMOUNT, **extra: object) -> Pay
     return PaymentVerification(
         authority=authority, amount=amount, order_id=ORDER_ID, extra=dict(extra)
     )
-
-
-# ---------------------------------------------------------------------------------------------
-# ZarinPal
-# ---------------------------------------------------------------------------------------------
 
 
 def test_zarinpal_request_sync(stub: Stub) -> None:
@@ -146,11 +133,6 @@ def test_zarinpal_details_carry_the_full_response(stub: Stub) -> None:
     assert details.fee_type == "Merchant"
 
 
-# ---------------------------------------------------------------------------------------------
-# Zibal
-# ---------------------------------------------------------------------------------------------
-
-
 def test_zibal_request_sync(stub: Stub) -> None:
     stub.reply("/zibal/request", {"result": 100, "trackId": 424242})
     payment = ZibalSync().make_payment_request(a_request())
@@ -225,11 +207,6 @@ def test_zibal_details_decode_the_status_and_keep_every_field(stub: Stub) -> Non
     assert details.wage == 500
 
 
-# ---------------------------------------------------------------------------------------------
-# Yektapay
-# ---------------------------------------------------------------------------------------------
-
-
 def test_yektapay_request_sends_its_token_header(stub: Stub) -> None:
     stub.reply("/yektapay/request", {"uuid": "u-1"})
     payment = YektapaySync(token="tok").make_payment_request(a_request())
@@ -247,11 +224,6 @@ def test_yektapay_verify_rejects_unsuccessful_status(stub: Stub) -> None:
     stub.reply("/yektapay/verify/u-1/", {"status": "failed"})
     verified = YektapaySync(token="tok").verify_payment(a_verification("u-1"))
     assert not verified.success
-
-
-# ---------------------------------------------------------------------------------------------
-# Top
-# ---------------------------------------------------------------------------------------------
 
 
 def test_top_request_uses_the_gateways_own_service_url(stub: Stub) -> None:
@@ -285,11 +257,6 @@ def test_top_rejects_a_non_numeric_order_id_before_calling_out(stub: Stub) -> No
 def test_top_needs_both_credentials() -> None:
     with pytest.raises(ConfigurationError):
         TopSync(username="u", password="")
-
-
-# ---------------------------------------------------------------------------------------------
-# Sepehr
-# ---------------------------------------------------------------------------------------------
 
 
 def test_sepehr_request_sync(stub: Stub) -> None:
@@ -335,11 +302,6 @@ def test_sepehr_reads_the_callback_case_insensitively(stub: Stub) -> None:
     )
     assert verified.success
     assert verified.reference == "RCPT-9"
-
-
-# ---------------------------------------------------------------------------------------------
-# Cross-cutting: both engines, over the wire
-# ---------------------------------------------------------------------------------------------
 
 
 def test_network_failure_on_verify_never_raises(stub: Stub) -> None:
@@ -409,11 +371,6 @@ async def test_concurrent_rest_calls_do_not_serialise(stub: Stub) -> None:
     )
     assert len(payments) == 8
     assert len(stub.exchanges) == 8
-
-
-# ---------------------------------------------------------------------------------------------
-# The registry
-# ---------------------------------------------------------------------------------------------
 
 
 def test_registry_lists_every_gateway() -> None:

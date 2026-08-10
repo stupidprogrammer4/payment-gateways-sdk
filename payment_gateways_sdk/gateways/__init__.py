@@ -1,17 +1,3 @@
-"""Every gateway, plus a registry for picking one by name at runtime.
-
-Each gateway directory holds the same five things: ``constants.py`` (endpoints and the fixed values
-its protocol defines), ``data.py`` (credentials and the gateway's own result records — dataclasses
-only), ``helpers.py`` (the pure functions that build payloads and read responses), and
-``sync_engine.py`` / ``async_engine.py``, which are thin shells over both. That split is why the
-two engines cannot drift apart: every decision about what a gateway said lives in ``helpers.py``
-and is shared, so only the transport call differs.
-
-The registry holds **classes, not instances**. A shared instance can carry exactly one merchant's
-credentials, so build one per merchant with :func:`get_sync_gateway` / :func:`get_async_gateway`
-rather than caching a gateway globally.
-"""
-
 from typing import Any
 
 from payment_gateways_sdk.common.exceptions import ConfigurationError

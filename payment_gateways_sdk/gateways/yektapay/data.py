@@ -1,16 +1,3 @@
-"""Yektapay — credentials and the records Yektapay itself returns.
-
-Dataclasses only. Endpoints and fixed values live in ``constants.py``; the functions that build
-payloads and read responses live in ``helpers.py``.
-
-Contract (REST/JSON): POST ``/api/v1/merchant/orders/`` ``{amount, title, callback_url}`` with an
-``Authorization: Token <token>`` header → ``uuid`` → the customer goes to ``/gateway/{uuid}``.
-POST ``/api/v1/merchant/orders/{uuid}/verify/`` → ``status == "successful"`` plus the settled
-``amount``.
-
-Amounts are in **Rial**, which is this SDK's unit, so they pass through unchanged.
-"""
-
 from dataclasses import dataclass
 
 from payment_gateways_sdk.common.data import GatewayDetails

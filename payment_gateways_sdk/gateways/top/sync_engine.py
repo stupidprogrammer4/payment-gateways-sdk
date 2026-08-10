@@ -21,9 +21,6 @@ from payment_gateways_sdk.gateways.top.helpers import (
 
 
 class TopSync:
-    """Top over the sync engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.ISyncPaymentGateway`."""
-
     name = NAME
 
     def __init__(self, username: str, password: str, *, timeout: float = DEFAULT_TIMEOUT) -> None:

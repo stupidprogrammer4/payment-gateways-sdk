@@ -1,19 +1,3 @@
-"""A real HTTP server that every gateway test runs against.
-
-There is no mocking library anywhere in this suite. ``respx`` patched httpx in-process, which went
-away with httpx; rather than swapping it for ``aioresponses`` plus ``responses`` — one mock library
-per engine, each faking a different client — the tests drive both engines over a real socket.
-
-That is strictly stronger. An in-process mock will accept a request no server would: wrong content
-type, unencoded body, a header the gateway dispatches on quietly missing. This server sees exactly
-what the SDK put on the wire, and both engines are held to the same bytes.
-
-Each gateway's endpoint constants are repointed at this server. They are patched where they are
-*used* — some engines import a URL directly, others reach it through ``helpers`` — because a
-module-level ``from … import NAME`` binds the value at import time, so patching the ``constants``
-module alone would change nothing.
-"""
-
 import json
 import threading
 from collections.abc import Iterator
@@ -36,8 +20,6 @@ from payment_gateways_sdk.gateways.zarinpal import helpers as zarinpal_helpers
 from payment_gateways_sdk.gateways.zibal import async_engine as zibal_async
 from payment_gateways_sdk.gateways.zibal import sync_engine as zibal_sync
 
-# The path each gateway operation is served on, and where its URL constant has to be patched.
-# ``(attribute, [modules that imported it])``.
 ROUTES: dict[str, tuple[str, list[Any]]] = {
     "/zarinpal/request": ("REQUEST_URL", [zarinpal_helpers]),
     "/zarinpal/verify": ("VERIFY_URL", [zarinpal_helpers]),

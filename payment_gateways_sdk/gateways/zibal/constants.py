@@ -15,8 +15,6 @@ REQUEST_SUCCESS_CODE = 100
 #: ``100`` verified now, ``201`` already verified — a repeated callback for a payment that arrived.
 VERIFY_SUCCESS_CODES = (100, 201)
 
-#: Zibal's own ``status`` values on a verify response, which describe *how* it was paid. They are
-#: reported, not acted on: whether money arrived is decided by ``result`` plus the amount check.
 PAYMENT_STATUSES = {
     -1: "pending",
     -2: "internal error",

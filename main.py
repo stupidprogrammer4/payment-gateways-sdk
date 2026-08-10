@@ -1,21 +1,3 @@
-"""How to use payment-gateways-sdk.
-
-Run it — ``python main.py`` — and it will open and verify a real payment against Zibal's public
-sandbox, which needs no credentials and moves no money. Everything else here is example code you
-can copy; the gateway-specific functions need that gateway's own credentials to run.
-
-The whole SDK is two calls:
-
-    payment = gateway.make_payment_request(PaymentRequest(...))   # send the customer to
-                                                                  # payment.redirect_url
-    result  = gateway.verify_payment(PaymentVerification(...))    # after they come back
-
-Every gateway ships two classes with those same two methods — ``<Name>Sync`` and ``<Name>Async``.
-Moving between engines is adding or removing ``await``, never a rewrite.
-
-**Amounts are in Rial everywhere.** If your domain keeps Toman, multiply by 10 before calling.
-"""
-
 import asyncio
 
 from payment_gateways_sdk import (
@@ -46,18 +28,7 @@ from payment_gateways_sdk.gateways.zibal import ZibalVerifyDetails
 CALLBACK_URL = "https://your-app.example/payments/callback"
 
 
-# ---------------------------------------------------------------------------------------------
-# 1. The sync engine — scripts, Django, Celery workers
-# ---------------------------------------------------------------------------------------------
-
-
 def open_a_payment_sync(merchant: str, order_id: str, amount_rial: int) -> tuple[str, str]:
-    """Step one: open a payment and get the URL to send the customer to.
-
-    Store the returned ``authority`` against your order before redirecting. It is the only thing
-    that lets you verify the payment afterwards, and it must come from *your* database on the way
-    back — never from the callback's query string.
-    """
     gateway = ZibalSync(merchant=merchant)
     payment = gateway.make_payment_request(
         PaymentRequest(
@@ -72,23 +43,10 @@ def open_a_payment_sync(merchant: str, order_id: str, amount_rial: int) -> tuple
 
 
 def verify_a_payment_sync(merchant: str, authority: str, amount_rial: int) -> VerificationResult:
-    """Step two: the customer is back — did the money actually arrive?
-
-    ``amount`` is the amount *you* recorded when opening the payment, not anything the callback
-    said. Gateways that report a settled amount are checked against it, and a mismatch fails.
-
-    This never raises for a declined payment: someone standing in front of a bank redirect must not
-    meet a stack trace. Check ``result.success``.
-    """
     gateway = ZibalSync(merchant=merchant)
     return gateway.verify_payment(
         PaymentVerification(authority=authority, amount=amount_rial, order_id="1001")
     )
-
-
-# ---------------------------------------------------------------------------------------------
-# 2. The async engine — FastAPI, aiohttp, anything on asyncio
-# ---------------------------------------------------------------------------------------------
 
 
 async def open_a_payment_async(merchant: str, order_id: str, amount_rial: int) -> tuple[str, str]:
@@ -113,18 +71,7 @@ async def open_many_at_once(merchant: str, count: int) -> list[str]:
     return [payment.redirect_url for payment in payments]
 
 
-# ---------------------------------------------------------------------------------------------
-# 3. Every gateway, and what each one needs
-# ---------------------------------------------------------------------------------------------
-
-
 def build_every_gateway() -> None:
-    """Credentials are constructor arguments — the SDK never reads them from the environment.
-
-    Keep them in your own settings layer or secret manager and pass them in. Build one gateway per
-    merchant rather than caching one globally: an instance carries exactly one merchant's
-    credentials, so a shared one sends everybody's money to whoever was configured first.
-    """
     ZarinpalSync(merchant_id="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
     ZarinpalAsync(merchant_id="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", sandbox=True)
     ZibalSync(merchant="your-merchant-code")  # defaults to the "zibal" sandbox merchant
@@ -148,21 +95,7 @@ def pick_a_gateway_at_runtime(name: str) -> None:
     print(f"built {sync_gateway.name} for both engines:", sync_gateway, async_gateway)
 
 
-# ---------------------------------------------------------------------------------------------
-# 4. Gateways whose verification needs the callback payload
-# ---------------------------------------------------------------------------------------------
-
-
 def verify_sepehr(terminal_id: str, callback_form: dict[str, str]) -> VerificationResult:
-    """Sepehr verifies against ``digitalreceipt`` from the bank's callback, not the token it issued.
-
-    Pass the callback's POST body straight through in ``extra``; the SDK reads what it needs and
-    ignores the rest. Field names are matched case-insensitively, because the bank sends
-    ``digitalreceipt`` lower-cased while documenting it camel-cased.
-
-    This is still safe: the receipt only *selects* which transaction to ask about. Whether the money
-    arrived is answered by Sepehr's own API and checked against the amount you recorded.
-    """
     return SepehrSync(terminal_id=terminal_id).verify_payment(
         PaymentVerification(
             authority="the-token-you-stored",
@@ -174,11 +107,6 @@ def verify_sepehr(terminal_id: str, callback_form: dict[str, str]) -> Verificati
 
 
 def verify_parsian(pin: str, callback_form: dict[str, str]) -> VerificationResult:
-    """Parsian reads ``status`` and ``RRN`` from its callback.
-
-    A non-zero ``status`` means the payer cancelled or timed out, and the SDK refuses to confirm
-    rather than asking the bank to settle a transaction that never happened.
-    """
     return ParsianSync(pin=pin).verify_payment(
         PaymentVerification(
             authority="the-token-you-stored",
@@ -189,19 +117,7 @@ def verify_parsian(pin: str, callback_form: dict[str, str]) -> VerificationResul
     )
 
 
-# ---------------------------------------------------------------------------------------------
-# 5. Errors
-# ---------------------------------------------------------------------------------------------
-
-
 def handle_errors(merchant: str) -> None:
-    """Opening a payment raises; verifying it does not.
-
-    That asymmetry is deliberate. A failure while opening means no payment exists at the gateway,
-    so failing loudly stops you redirecting a customer into nothing. A failure while verifying may
-    concern money that already moved, so it comes back as a result you can retry from and
-    reconcile — never as an exception in front of a returning payer.
-    """
     try:
         ZibalSync(merchant=merchant).make_payment_request(
             PaymentRequest(amount=1_000, callback_url=CALLBACK_URL, order_id="1001")
@@ -225,18 +141,7 @@ def handle_errors(merchant: str) -> None:
         print("not paid:", result.message)
 
 
-# ---------------------------------------------------------------------------------------------
-# 6. Gateway-specific data
-# ---------------------------------------------------------------------------------------------
-
-
 def read_gateway_specific_details(result: VerificationResult) -> None:
-    """``result.details`` is that gateway's own record, typed — no digging through ``raw``.
-
-    Zibal reports the settlement time, the masked card and its commission; ZarinPal reports a fee
-    breakdown and a card hash; Parsian reports the masked card and the Shaparak RRN. Each gateway's
-    record carries what that gateway actually sends, so nothing is flattened away.
-    """
     print("reference:", result.reference)  # on every gateway
     print("amount   :", result.amount)
     print("details  :", result.details)  # e.g. ZibalVerifyDetails(...)
@@ -248,10 +153,6 @@ def read_gateway_specific_details(result: VerificationResult) -> None:
         print("status     :", result.details.status, result.details.status_text)
 
 
-# ---------------------------------------------------------------------------------------------
-# A runnable demo, against Zibal's public sandbox
-# ---------------------------------------------------------------------------------------------
-
 SANDBOX_MERCHANT = "zibal"
 """Zibal's public sandbox merchant. Auto-succeeds and cannot route a real rial anywhere."""
 
@@ -262,10 +163,6 @@ def demo_sync() -> None:
     print("authority   :", authority)
     print("send user to:", redirect_url)
 
-    # This verification is expected to fail, and that is the correct answer: nobody has opened the
-    # redirect URL above and paid, so no money arrived. Zibal says "transaction failed" and the SDK
-    # reports it rather than settling. Open the URL in a browser and pay on the sandbox card form,
-    # then run the verify again to see a success.
     result = verify_a_payment_sync(SANDBOX_MERCHANT, authority, 50_000)
     print("verified    :", result.success, "(expected — the payment page was never completed)")
     print("message     :", result.message)

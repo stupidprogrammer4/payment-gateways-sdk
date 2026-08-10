@@ -1,15 +1,3 @@
-"""Parsian / PEC — zeep clients, request building, and result reading.
-
-``zeep`` is the SOAP layer for both engines: :class:`zeep.Client` for the sync engine and
-:class:`zeep.AsyncClient` for the async one. Both are built from the same WSDL and take the same
-``requestData`` mapping, so the two engines share every decision here and differ only in the await.
-
-**The WSDL is fetched and parsed synchronously**, by ``zeep``, on the first call for a given
-(wsdl, proxy) pair — including under :class:`zeep.AsyncClient`, whose transport uses a blocking
-client for the document itself. Clients are therefore cached: paying that cost once per process is
-the difference between a slow first payment and a slow every payment.
-"""
-
 from typing import Any
 
 from payment_gateways_sdk.common.data import (
@@ -32,8 +20,6 @@ from payment_gateways_sdk.gateways.parsian.data import (
     ParsianSaleDetails,
 )
 
-#: Parsed WSDLs are expensive, so clients are cached per (wsdl, proxy) and per engine. Keyed by
-#: proxy as well as URL, because two merchants may reach PEC by different routes.
 _sync_clients: dict[tuple[str, str], Any] = {}
 _async_clients: dict[tuple[str, str], Any] = {}
 
@@ -71,11 +57,6 @@ def sync_client(config: ParsianConfig, wsdl: str) -> Any:
 
 
 def async_client(config: ParsianConfig, wsdl: str) -> Any:
-    """A cached :class:`zeep.AsyncClient`.
-
-    Its operations are awaited, but constructing it is not: ``zeep`` reads the WSDL through a
-    synchronous client even here. That happens once per (wsdl, proxy) thanks to the cache.
-    """
     proxy = config.proxy.strip()
     key = (wsdl, proxy)
     cached = _async_clients.get(key)
@@ -112,11 +93,6 @@ def redirect_url(token: int) -> str:
 
 
 def build_sale_request(config: ParsianConfig, data: PaymentRequest) -> dict[str, Any]:
-    """The ``requestData`` mapping for ``SalePaymentRequest``.
-
-    ``zeep`` maps this onto the WSDL's own types, so ``Amount`` and ``OrderId`` go out as the
-    ``long`` the schema declares rather than as strings.
-    """
     return {
         "LoginAccount": config.pin.strip(),
         "Amount": data.amount,
@@ -169,10 +145,6 @@ def parse_confirm_result(result: Any, data: PaymentVerification) -> Verification
         return VerificationResult(
             success=False, message=f"parsian declined: {details.status}", details=details
         )
-    # ConfirmPayment does not echo the amount — PEC exposes that on a different operation — so
-    # there is nothing here to compare against. What binds this answer to this payment is the
-    # token: it is the one issued when the payment was opened, and Parsian will confirm no other
-    # transaction for it.
     rrn = details.rrn or read_callback(data.extra).rrn
     return VerificationResult(
         success=True,
@@ -183,8 +155,6 @@ def parse_confirm_result(result: Any, data: PaymentVerification) -> Verification
 
 
 def read_callback(params: dict[str, Any]) -> ParsianCallbackDetails:
-    """The bank's callback form data, typed. Field names are matched case-insensitively because
-    PEC sends ``status`` lower-cased and ``Token`` capitalised in the same POST."""
     lowered = {str(key).lower(): value for key, value in params.items()}
     return ParsianCallbackDetails(
         token=as_int(lowered.get("token")),
@@ -196,11 +166,6 @@ def read_callback(params: dict[str, Any]) -> ParsianCallbackDetails:
 
 
 def callback_declined(data: PaymentVerification) -> str | None:
-    """Whether the bank already said in its callback that the customer did not pay.
-
-    An absent status is treated as "no objection" — the Confirm call is still the deciding one, and
-    refusing to ask because a descriptive field was missing would strand a payment that did arrive.
-    """
     status = read_callback(data.extra).status
     if status is not None and status != SUCCESS_STATUS:
         return f"parsian callback status {status}"

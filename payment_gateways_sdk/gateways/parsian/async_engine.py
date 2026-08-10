@@ -1,14 +1,3 @@
-"""Parsian / PEC, async engine — SOAP over :class:`zeep.AsyncClient`.
-
-The two service calls are genuinely awaited: ``zeep``'s async transport issues them over an
-``httpx.AsyncClient``, so nothing here parks the event loop and no worker thread is involved.
-
-The one part that is *not* async is building the client, because ``zeep`` reads and parses the WSDL
-through a synchronous client even under :class:`zeep.AsyncClient`. That happens once per
-(wsdl, proxy) — the clients are cached in ``helpers`` — so it costs the first payment of a process
-and nothing after it. Call :func:`warm_up` at startup to pay it before any customer is waiting.
-"""
-
 from typing import Any
 
 from payment_gateways_sdk.common.data import (
@@ -37,23 +26,12 @@ from payment_gateways_sdk.gateways.parsian.helpers import (
 
 
 class ParsianAsync:
-    """Parsian over the async engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.IAsyncPaymentGateway`.
-
-    Needs ``zeep`` with its async transport: ``pip install "payment-gateways-sdk[parsian]"``.
-    """
-
     name = NAME
 
     def __init__(self, pin: str, *, proxy: str = "") -> None:
         self.config = ParsianConfig(pin=pin, proxy=proxy)
 
     def warm_up(self) -> None:
-        """Fetch and parse both WSDLs now, so no payment pays for it.
-
-        This blocks — that is the point. Call it once during application startup rather than
-        letting the first customer of each process wait for two WSDL documents.
-        """
         async_client(self.config, SALE_WSDL)
         async_client(self.config, CONFIRM_WSDL)
 

@@ -1,11 +1,3 @@
-"""The two gateways that need an optional dependency: Sadad (3DES) and Parsian (SOAP).
-
-Neither ``pycryptodome`` nor ``zeep`` is a base dependency, so these tests cover the part that must
-hold whether or not they are installed: importing the SDK works regardless, credentials are still
-validated, and a missing dependency names itself instead of surfacing as an ImportError from
-somewhere unrelated.
-"""
-
 import base64
 import builtins
 from collections.abc import Iterator
@@ -93,8 +85,6 @@ def test_sadad_rejects_a_terminal_key_that_is_not_a_valid_3des_key() -> None:
 
 
 def test_sadad_sign_is_deterministic_and_base64() -> None:
-    """3DES-ECB with a fixed key has no IV, so the same input must give the same signature —
-    which is what makes the verify call's SignData(Token) reproducible."""
     pytest.importorskip("Crypto", reason="needs the 'sadad' extra")
     key = base64.b64encode(bytes(range(24))).decode()
     config = SadadSync(merchant_id="m", terminal_id="t", terminal_key=key).config

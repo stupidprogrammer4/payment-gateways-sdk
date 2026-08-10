@@ -25,9 +25,6 @@ from payment_gateways_sdk.gateways.zibal.helpers import (
 
 
 class ZibalAsync:
-    """Zibal over the async engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.IAsyncPaymentGateway`."""
-
     name = NAME
 
     def __init__(

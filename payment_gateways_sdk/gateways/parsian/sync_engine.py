@@ -28,12 +28,6 @@ from payment_gateways_sdk.gateways.parsian.helpers import (
 
 
 class ParsianSync:
-    """Parsian over the sync engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.ISyncPaymentGateway`.
-
-    Needs ``zeep``: ``pip install "payment-gateways-sdk[parsian]"``.
-    """
-
     name = NAME
 
     def __init__(self, pin: str, *, proxy: str = "") -> None:

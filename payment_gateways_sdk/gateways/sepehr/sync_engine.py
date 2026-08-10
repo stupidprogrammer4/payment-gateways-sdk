@@ -21,9 +21,6 @@ from payment_gateways_sdk.gateways.sepehr.helpers import (
 
 
 class SepehrSync:
-    """Sepehr over the sync engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.ISyncPaymentGateway`."""
-
     name = NAME
 
     def __init__(self, terminal_id: str, *, timeout: float = DEFAULT_TIMEOUT) -> None:
@@ -42,8 +39,6 @@ class SepehrSync:
     def verify_payment(self, data: PaymentVerification) -> VerificationResult:
         receipt = receipt_from(data)
         if not receipt:
-            # Fail closed. Without the receipt there is no question to ask Sepehr, and answering
-            # "verified" for a transaction nobody asked about is the outcome that costs money.
             return VerificationResult(
                 success=False,
                 message=(

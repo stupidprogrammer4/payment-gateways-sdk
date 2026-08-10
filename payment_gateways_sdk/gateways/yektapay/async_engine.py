@@ -21,9 +21,6 @@ from payment_gateways_sdk.gateways.yektapay.helpers import (
 
 
 class YektapayAsync:
-    """Yektapay over the async engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.IAsyncPaymentGateway`."""
-
     name = NAME
 
     def __init__(self, token: str, *, timeout: float = DEFAULT_TIMEOUT) -> None:

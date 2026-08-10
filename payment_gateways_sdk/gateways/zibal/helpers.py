@@ -34,8 +34,6 @@ def build_request_payload(config: ZibalConfig, data: PaymentRequest) -> dict[str
         "amount": data.amount,
         "callbackUrl": data.callback_url,
     }
-    # Zibal takes an opaque orderId, so any reference works — including a UUID, which is the better
-    # key because it leaks nothing about how many payments you have taken.
     if data.order_id:
         payload["orderId"] = data.order_id
     if data.description:
@@ -98,8 +96,6 @@ def parse_verify_response(raw: dict[str, Any], data: PaymentVerification) -> Ver
             raw=raw,
             details=details,
         )
-    # Fail closed on a missing amount: Zibal does report one, so its absence means something is
-    # wrong with the response rather than that the check does not apply.
     settled_amount, reason = check_amount(
         raw.get("amount"), data.amount, gateway=NAME, required=True
     )

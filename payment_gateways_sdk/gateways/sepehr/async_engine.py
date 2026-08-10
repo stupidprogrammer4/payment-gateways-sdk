@@ -21,9 +21,6 @@ from payment_gateways_sdk.gateways.sepehr.helpers import (
 
 
 class SepehrAsync:
-    """Sepehr over the async engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.IAsyncPaymentGateway`."""
-
     name = NAME
 
     def __init__(self, terminal_id: str, *, timeout: float = DEFAULT_TIMEOUT) -> None:

@@ -37,11 +37,6 @@ def _pkcs7_pad(data: bytes, block_size: int = DES3_BLOCK_SIZE) -> bytes:
 
 
 def sign(config: SadadConfig, plain_text: str) -> str:
-    """3DES-ECB encrypt under the terminal key, base64 in and out.
-
-    ECB has no IV, so the same input always produces the same signature — which is what makes the
-    verify call's ``SignData(Token)`` reproducible without storing anything extra.
-    """
     try:
         from Crypto.Cipher import DES3  # noqa: PLC0415 — lazy on purpose, see the module docstring
     except ImportError as exc:

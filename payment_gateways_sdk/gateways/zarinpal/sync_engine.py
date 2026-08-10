@@ -22,9 +22,6 @@ from payment_gateways_sdk.gateways.zarinpal.helpers import (
 
 
 class ZarinpalSync:
-    """ZarinPal over the sync engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.ISyncPaymentGateway`."""
-
     name = NAME
 
     def __init__(

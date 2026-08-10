@@ -1,28 +1,3 @@
-"""Sadad (بانک ملی) — credentials and the records Sadad itself returns.
-
-Dataclasses only. Endpoints and fixed values live in ``constants.py``; signing, payload building
-and response reading live in ``helpers.py``.
-
-Contract (REST/JSON): every request carries ``SignData``, a 3DES-ECB encryption of a
-semicolon-joined string under the terminal key, base64 on both ends. POST
-``/VPG/api/v0/Request/PaymentRequest``
-``{MerchantId, TerminalId, Amount, OrderId, LocalDateTime, ReturnUrl, SignData}`` →
-``ResCode == 0`` + ``Token`` → the customer goes to ``/VPG/Purchase?Token=…``. POST
-``/VPG/api/v0/Advice/Verify`` ``{Token, SignData(Token)}`` → ``ResCode == 0`` + ``Amount`` +
-``RetrivalRefNo``.
-
-**Optional dependency.** 3DES has no stdlib equivalent, so this gateway needs ``pycryptodome``::
-
-    pip install "payment-gateways-sdk[sadad]"
-
-It is imported lazily and its absence raises
-:class:`~payment_gateways_sdk.common.exceptions.DependencyError`. An ImportError at module scope
-would break every *other* gateway too, so a deployment that never configured Sadad would lose Zibal
-alongside it.
-
-Amounts are in **Rial**, which is this SDK's unit, so they pass through unchanged.
-"""
-
 from dataclasses import dataclass
 
 from payment_gateways_sdk.common.data import GatewayDetails
@@ -62,12 +37,6 @@ class SadadRequestDetails(GatewayDetails):
 
 @dataclass(frozen=True)
 class SadadVerifyDetails(GatewayDetails):
-    """Everything Sadad reports on verification.
-
-    ``retrival_ref_no`` keeps the bank's own spelling of "retrieval" — renaming it here would make
-    the field impossible to match against Sadad's documentation and its support tooling.
-    """
-
     res_code: int | None = None
     description: str | None = None
     amount: int | None = None

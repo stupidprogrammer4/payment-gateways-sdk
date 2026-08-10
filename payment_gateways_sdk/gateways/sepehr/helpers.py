@@ -66,12 +66,6 @@ def parse_request_response(config: SepehrConfig, raw: dict[str, Any]) -> Payment
 
 
 def read_callback(params: dict[str, Any]) -> SepehrCallbackDetails:
-    """The bank's callback form data, typed.
-
-    Field names are matched case-insensitively: the bank POSTs ``invoiceid`` and ``digitalreceipt``
-    in lower case while its own documentation writes them camel-cased, and a caller passing the
-    form through untouched should not have to know which one arrived.
-    """
     lowered = {str(key).lower(): value for key, value in params.items()}
     return SepehrCallbackDetails(
         digital_receipt=as_text(lowered.get("digitalreceipt")),
@@ -121,8 +115,6 @@ def parse_verify_response(
     )
     if reason:
         return VerificationResult(success=False, message=reason, raw=raw, details=details)
-    # The receipt is the settlement reference: it is what the bank's own statement carries, and it
-    # is unique per transaction.
     return VerificationResult(
         success=True, reference=receipt, amount=settled_amount, raw=raw, details=details
     )

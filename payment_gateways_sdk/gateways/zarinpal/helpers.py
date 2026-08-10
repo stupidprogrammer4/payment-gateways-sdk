@@ -1,9 +1,3 @@
-"""ZarinPal — URL selection, payload building, and response reading.
-
-Everything here is a pure function over the dataclasses in ``data.py``, which is what lets the sync
-and async engines share every decision and differ only in how the HTTP call is made.
-"""
-
 from typing import Any
 
 from payment_gateways_sdk.common.data import (
@@ -122,11 +116,6 @@ def parse_verify_response(raw: dict[str, Any], data: PaymentVerification) -> Ver
             raw=raw,
             details=details,
         )
-    # The amount check is made by ZarinPal, and that is the stronger form: our amount is part of the
-    # verify *request*, and a transaction settled for anything else comes back as error -50 rather
-    # than as 100. So a 100 already means "paid, and paid this much". v4 carries no ``amount`` field
-    # on verify; if a later version adds one it is still checked, because a gateway contradicting
-    # itself must not settle.
     settled_amount, reason = check_amount(
         _body(raw).get("amount"), data.amount, gateway=NAME, required=False
     )

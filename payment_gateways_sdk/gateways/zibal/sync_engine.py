@@ -25,9 +25,6 @@ from payment_gateways_sdk.gateways.zibal.helpers import (
 
 
 class ZibalSync:
-    """Zibal over the sync engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.ISyncPaymentGateway`."""
-
     name = NAME
 
     def __init__(
@@ -49,8 +46,6 @@ class ZibalSync:
         return parse_request_response(raw)
 
     def verify_payment(self, data: PaymentVerification) -> VerificationResult:
-        # A non-numeric authority means the wrong value was stored, and asking Zibal about it would
-        # be asking about somebody else's transaction or none at all.
         try:
             payload = build_verify_payload(self.config, data)
         except (TypeError, ValueError):

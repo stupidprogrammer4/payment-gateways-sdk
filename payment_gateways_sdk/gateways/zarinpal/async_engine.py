@@ -22,9 +22,6 @@ from payment_gateways_sdk.gateways.zarinpal.helpers import (
 
 
 class ZarinpalAsync:
-    """ZarinPal over the async engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.IAsyncPaymentGateway`."""
-
     name = NAME
 
     def __init__(

@@ -20,12 +20,6 @@ from payment_gateways_sdk.gateways.sadad.helpers import (
 
 
 class SadadSync:
-    """Sadad over the sync engine. Satisfies
-    :class:`~payment_gateways_sdk.common.interfaces.ISyncPaymentGateway`.
-
-    Needs ``pycryptodome``: ``pip install "payment-gateways-sdk[sadad]"``.
-    """
-
     name = NAME
 
     def __init__(
