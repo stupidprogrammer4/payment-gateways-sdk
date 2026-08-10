@@ -1,13 +1,14 @@
 from typing import Any
 
 from payment_gateways_sdk.common.data import (
+    CardPaymentRequest,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
     VerificationResult,
 )
 from payment_gateways_sdk.common.exceptions import GatewayError
-from payment_gateways_sdk.common.utils import as_int, as_text, check_amount
+from payment_gateways_sdk.common.utils import as_int, as_text, check_amount, normalized_pan
 from payment_gateways_sdk.gateways.zarinpal.constants import (
     DEFAULT_DESCRIPTION,
     NAME,
@@ -58,6 +59,16 @@ def build_request_payload(config: ZarinpalConfig, data: PaymentRequest) -> dict[
             else {}
         ),
     }
+
+
+def build_card_request_payload(config: ZarinpalConfig, data: CardPaymentRequest) -> dict[str, Any]:
+    payload = build_request_payload(config, data)
+    metadata = dict(payload.get("metadata") or {})
+    metadata["card_pan"] = normalized_pan(data.card_pan, gateway=NAME)
+    if data.mobile:
+        metadata["mobile"] = data.mobile
+    payload["metadata"] = metadata
+    return payload
 
 
 def read_request_details(raw: dict[str, Any]) -> ZarinpalRequestDetails:

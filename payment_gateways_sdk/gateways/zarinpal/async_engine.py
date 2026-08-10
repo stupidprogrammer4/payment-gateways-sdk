@@ -2,6 +2,7 @@
 
 from payment_gateways_sdk.common.constants import DEFAULT_TIMEOUT
 from payment_gateways_sdk.common.data import (
+    CardPaymentRequest,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
@@ -12,6 +13,7 @@ from payment_gateways_sdk.common.http import apost_json
 from payment_gateways_sdk.gateways.zarinpal.constants import NAME
 from payment_gateways_sdk.gateways.zarinpal.data import ZarinpalConfig
 from payment_gateways_sdk.gateways.zarinpal.helpers import (
+    build_card_request_payload,
     build_request_payload,
     build_verify_payload,
     parse_request_response,
@@ -56,3 +58,14 @@ class ZarinpalAsync:
         except PaymentError as exc:
             return VerificationResult(success=False, message=str(exc))
         return parse_verify_response(raw, data)
+
+
+class ZarinpalCardAsync(ZarinpalAsync):
+    async def make_card_payment_request(self, data: CardPaymentRequest) -> PaymentResponse:
+        raw = await apost_json(
+            request_url(self.config),
+            build_card_request_payload(self.config, data),
+            gateway=self.name,
+            timeout=self.timeout,
+        )
+        return parse_request_response(self.config, raw)
