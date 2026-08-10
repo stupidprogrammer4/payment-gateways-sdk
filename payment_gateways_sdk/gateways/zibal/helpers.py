@@ -3,13 +3,14 @@
 from typing import Any
 
 from payment_gateways_sdk.common.data import (
+    CardPaymentRequest,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
     VerificationResult,
 )
 from payment_gateways_sdk.common.exceptions import GatewayError
-from payment_gateways_sdk.common.utils import as_int, as_text, check_amount
+from payment_gateways_sdk.common.utils import as_int, as_text, check_amount, normalized_pan
 from payment_gateways_sdk.gateways.zibal.constants import (
     NAME,
     PAYMENT_STATUSES,
@@ -40,6 +41,15 @@ def build_request_payload(config: ZibalConfig, data: PaymentRequest) -> dict[str
         payload["description"] = data.description
     if data.mobile:
         payload["mobile"] = data.mobile
+    return payload
+
+
+def build_card_request_payload(config: ZibalConfig, data: CardPaymentRequest) -> dict[str, Any]:
+    payload = build_request_payload(config, data)
+    payload["allowedCards"] = [normalized_pan(data.card_pan, gateway=NAME)]
+    payload["checkMobileWithCard"] = config.check_mobile_with_card
+    if data.national_id:
+        payload["nationalCode"] = data.national_id
     return payload
 
 

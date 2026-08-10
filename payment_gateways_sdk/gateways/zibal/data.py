@@ -9,6 +9,7 @@ class ZibalConfig:
     """Zibal credentials. ``merchant`` is the merchant code from your panel."""
 
     merchant: str = SANDBOX_MERCHANT
+    check_mobile_with_card: bool = True
 
 
 @dataclass(frozen=True)

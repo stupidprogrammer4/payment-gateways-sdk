@@ -2,6 +2,7 @@
 
 from payment_gateways_sdk.common.constants import DEFAULT_TIMEOUT
 from payment_gateways_sdk.common.data import (
+    CardPaymentRequest,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
@@ -17,6 +18,7 @@ from payment_gateways_sdk.gateways.zibal.constants import (
 )
 from payment_gateways_sdk.gateways.zibal.data import ZibalConfig
 from payment_gateways_sdk.gateways.zibal.helpers import (
+    build_card_request_payload,
     build_request_payload,
     build_verify_payload,
     parse_request_response,
@@ -31,9 +33,10 @@ class ZibalAsync:
         self,
         merchant: str = SANDBOX_MERCHANT,
         *,
+        check_mobile_with_card: bool = True,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
-        self.config = ZibalConfig(merchant=merchant)
+        self.config = ZibalConfig(merchant=merchant, check_mobile_with_card=check_mobile_with_card)
         self.timeout = timeout
 
     async def make_payment_request(self, data: PaymentRequest) -> PaymentResponse:
@@ -55,3 +58,14 @@ class ZibalAsync:
         except PaymentError as exc:
             return VerificationResult(success=False, message=str(exc))
         return parse_verify_response(raw, data)
+
+
+class ZibalCardAsync(ZibalAsync):
+    async def make_card_payment_request(self, data: CardPaymentRequest) -> PaymentResponse:
+        raw = await apost_json(
+            REQUEST_URL,
+            build_card_request_payload(self.config, data),
+            gateway=self.name,
+            timeout=self.timeout,
+        )
+        return parse_request_response(raw)
