@@ -18,3 +18,5 @@ SUCCESS_RES_CODES = (0, "0")
 
 #: 3DES operates on 8-byte blocks, so plaintext is PKCS#7-padded to a multiple of this.
 DES3_BLOCK_SIZE = 8
+
+PAN_AUTHENTICATION_TYPE = 2

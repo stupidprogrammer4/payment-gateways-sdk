@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from payment_gateways_sdk.common.data import (
+    CardPaymentRequest,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
@@ -15,10 +16,17 @@ from payment_gateways_sdk.common.exceptions import (
     DependencyError,
     GatewayError,
 )
-from payment_gateways_sdk.common.utils import as_int, as_text, check_amount, numeric_order_id
+from payment_gateways_sdk.common.utils import (
+    as_int,
+    as_text,
+    check_amount,
+    normalized_pan,
+    numeric_order_id,
+)
 from payment_gateways_sdk.gateways.sadad.constants import (
     DES3_BLOCK_SIZE,
     NAME,
+    PAN_AUTHENTICATION_TYPE,
     PURCHASE_URL,
     SUCCESS_RES_CODES,
     TEHRAN,
@@ -76,6 +84,18 @@ def build_request_payload(config: SadadConfig, data: PaymentRequest) -> dict[str
         "ReturnUrl": data.callback_url,
         "SignData": sign(config, f"{terminal};{order_id};{data.amount}"),
     }
+
+
+def build_card_request_payload(config: SadadConfig, data: CardPaymentRequest) -> dict[str, Any]:
+    payload = build_request_payload(config, data)
+    payload["PanAuthenticationType"] = PAN_AUTHENTICATION_TYPE
+    payload["SourcePanList"] = {
+        "Pan": sign(config, normalized_pan(data.card_pan, gateway=NAME)),
+        "IsDefault": True,
+    }
+    if data.mobile:
+        payload["UserId"] = data.mobile
+    return payload
 
 
 def read_request_details(raw: dict[str, Any]) -> SadadRequestDetails:
