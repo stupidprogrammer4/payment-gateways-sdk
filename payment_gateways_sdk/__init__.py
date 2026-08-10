@@ -1,3 +1,4 @@
+from payment_gateways_sdk.common.data import CardPaymentRequest as CardPaymentRequest
 from payment_gateways_sdk.common.data import GatewayDetails as GatewayDetails
 from payment_gateways_sdk.common.data import PaymentRequest as PaymentRequest
 from payment_gateways_sdk.common.data import PaymentResponse as PaymentResponse
@@ -8,11 +9,21 @@ from payment_gateways_sdk.common.exceptions import DependencyError as Dependency
 from payment_gateways_sdk.common.exceptions import GatewayError as GatewayError
 from payment_gateways_sdk.common.exceptions import NetworkError as NetworkError
 from payment_gateways_sdk.common.exceptions import PaymentError as PaymentError
+from payment_gateways_sdk.common.interfaces import (
+    IAsyncCardPaymentGateway as IAsyncCardPaymentGateway,
+)
 from payment_gateways_sdk.common.interfaces import IAsyncPaymentGateway as IAsyncPaymentGateway
+from payment_gateways_sdk.common.interfaces import (
+    ISyncCardPaymentGateway as ISyncCardPaymentGateway,
+)
 from payment_gateways_sdk.common.interfaces import ISyncPaymentGateway as ISyncPaymentGateway
 from payment_gateways_sdk.gateways import ParsianAsync as ParsianAsync
+from payment_gateways_sdk.gateways import ParsianCardAsync as ParsianCardAsync
+from payment_gateways_sdk.gateways import ParsianCardSync as ParsianCardSync
 from payment_gateways_sdk.gateways import ParsianSync as ParsianSync
 from payment_gateways_sdk.gateways import SadadAsync as SadadAsync
+from payment_gateways_sdk.gateways import SadadCardAsync as SadadCardAsync
+from payment_gateways_sdk.gateways import SadadCardSync as SadadCardSync
 from payment_gateways_sdk.gateways import SadadSync as SadadSync
 from payment_gateways_sdk.gateways import SepehrAsync as SepehrAsync
 from payment_gateways_sdk.gateways import SepehrSync as SepehrSync
@@ -21,11 +32,18 @@ from payment_gateways_sdk.gateways import TopSync as TopSync
 from payment_gateways_sdk.gateways import YektapayAsync as YektapayAsync
 from payment_gateways_sdk.gateways import YektapaySync as YektapaySync
 from payment_gateways_sdk.gateways import ZarinpalAsync as ZarinpalAsync
+from payment_gateways_sdk.gateways import ZarinpalCardAsync as ZarinpalCardAsync
+from payment_gateways_sdk.gateways import ZarinpalCardSync as ZarinpalCardSync
 from payment_gateways_sdk.gateways import ZarinpalSync as ZarinpalSync
 from payment_gateways_sdk.gateways import ZibalAsync as ZibalAsync
+from payment_gateways_sdk.gateways import ZibalCardAsync as ZibalCardAsync
+from payment_gateways_sdk.gateways import ZibalCardSync as ZibalCardSync
 from payment_gateways_sdk.gateways import ZibalSync as ZibalSync
 from payment_gateways_sdk.gateways import available as available
+from payment_gateways_sdk.gateways import available_card_gateways as available_card_gateways
+from payment_gateways_sdk.gateways import get_async_card_gateway as get_async_card_gateway
 from payment_gateways_sdk.gateways import get_async_gateway as get_async_gateway
+from payment_gateways_sdk.gateways import get_sync_card_gateway as get_sync_card_gateway
 from payment_gateways_sdk.gateways import get_sync_gateway as get_sync_gateway
 
 __version__ = "0.1.0"

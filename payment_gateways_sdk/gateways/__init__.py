@@ -1,14 +1,23 @@
 from typing import Any
 
 from payment_gateways_sdk.common.exceptions import ConfigurationError
-from payment_gateways_sdk.common.interfaces import IAsyncPaymentGateway, ISyncPaymentGateway
+from payment_gateways_sdk.common.interfaces import (
+    IAsyncCardPaymentGateway,
+    IAsyncPaymentGateway,
+    ISyncCardPaymentGateway,
+    ISyncPaymentGateway,
+)
 from payment_gateways_sdk.gateways.parsian import ParsianAsync as ParsianAsync
 from payment_gateways_sdk.gateways.parsian import ParsianCallbackDetails as ParsianCallbackDetails
+from payment_gateways_sdk.gateways.parsian import ParsianCardAsync as ParsianCardAsync
+from payment_gateways_sdk.gateways.parsian import ParsianCardSync as ParsianCardSync
 from payment_gateways_sdk.gateways.parsian import ParsianConfig as ParsianConfig
 from payment_gateways_sdk.gateways.parsian import ParsianConfirmDetails as ParsianConfirmDetails
 from payment_gateways_sdk.gateways.parsian import ParsianSaleDetails as ParsianSaleDetails
 from payment_gateways_sdk.gateways.parsian import ParsianSync as ParsianSync
 from payment_gateways_sdk.gateways.sadad import SadadAsync as SadadAsync
+from payment_gateways_sdk.gateways.sadad import SadadCardAsync as SadadCardAsync
+from payment_gateways_sdk.gateways.sadad import SadadCardSync as SadadCardSync
 from payment_gateways_sdk.gateways.sadad import SadadConfig as SadadConfig
 from payment_gateways_sdk.gateways.sadad import SadadRequestDetails as SadadRequestDetails
 from payment_gateways_sdk.gateways.sadad import SadadSync as SadadSync
@@ -30,11 +39,15 @@ from payment_gateways_sdk.gateways.yektapay import YektapayOrderDetails as Yekta
 from payment_gateways_sdk.gateways.yektapay import YektapaySync as YektapaySync
 from payment_gateways_sdk.gateways.yektapay import YektapayVerifyDetails as YektapayVerifyDetails
 from payment_gateways_sdk.gateways.zarinpal import ZarinpalAsync as ZarinpalAsync
+from payment_gateways_sdk.gateways.zarinpal import ZarinpalCardAsync as ZarinpalCardAsync
+from payment_gateways_sdk.gateways.zarinpal import ZarinpalCardSync as ZarinpalCardSync
 from payment_gateways_sdk.gateways.zarinpal import ZarinpalConfig as ZarinpalConfig
 from payment_gateways_sdk.gateways.zarinpal import ZarinpalRequestDetails as ZarinpalRequestDetails
 from payment_gateways_sdk.gateways.zarinpal import ZarinpalSync as ZarinpalSync
 from payment_gateways_sdk.gateways.zarinpal import ZarinpalVerifyDetails as ZarinpalVerifyDetails
 from payment_gateways_sdk.gateways.zibal import ZibalAsync as ZibalAsync
+from payment_gateways_sdk.gateways.zibal import ZibalCardAsync as ZibalCardAsync
+from payment_gateways_sdk.gateways.zibal import ZibalCardSync as ZibalCardSync
 from payment_gateways_sdk.gateways.zibal import ZibalConfig as ZibalConfig
 from payment_gateways_sdk.gateways.zibal import ZibalRequestDetails as ZibalRequestDetails
 from payment_gateways_sdk.gateways.zibal import ZibalSync as ZibalSync
@@ -59,6 +72,47 @@ ASYNC_GATEWAYS: dict[str, type[IAsyncPaymentGateway]] = {
     "zarinpal": ZarinpalAsync,
     "zibal": ZibalAsync,
 }
+
+
+SYNC_CARD_GATEWAYS: dict[str, type[ISyncCardPaymentGateway]] = {
+    "parsian": ParsianCardSync,
+    "sadad": SadadCardSync,
+    "zarinpal": ZarinpalCardSync,
+    "zibal": ZibalCardSync,
+}
+
+ASYNC_CARD_GATEWAYS: dict[str, type[IAsyncCardPaymentGateway]] = {
+    "parsian": ParsianCardAsync,
+    "sadad": SadadCardAsync,
+    "zarinpal": ZarinpalCardAsync,
+    "zibal": ZibalCardAsync,
+}
+
+
+def available_card_gateways() -> tuple[str, ...]:
+    return tuple(sorted(SYNC_CARD_GATEWAYS))
+
+
+def get_sync_card_gateway(name: str, **credentials: Any) -> ISyncCardPaymentGateway:
+    try:
+        gateway_cls = SYNC_CARD_GATEWAYS[name]
+    except KeyError:
+        raise ConfigurationError(
+            f"gateway {name!r} does not support card payments — "
+            f"available: {', '.join(available_card_gateways())}"
+        ) from None
+    return gateway_cls(**credentials)
+
+
+def get_async_card_gateway(name: str, **credentials: Any) -> IAsyncCardPaymentGateway:
+    try:
+        gateway_cls = ASYNC_CARD_GATEWAYS[name]
+    except KeyError:
+        raise ConfigurationError(
+            f"gateway {name!r} does not support card payments — "
+            f"available: {', '.join(available_card_gateways())}"
+        ) from None
+    return gateway_cls(**credentials)
 
 
 def available() -> tuple[str, ...]:

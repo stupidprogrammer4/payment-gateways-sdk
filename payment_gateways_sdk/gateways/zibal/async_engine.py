@@ -16,7 +16,7 @@ from payment_gateways_sdk.gateways.zibal.constants import (
     SANDBOX_MERCHANT,
     VERIFY_URL,
 )
-from payment_gateways_sdk.gateways.zibal.data import ZibalConfig
+from payment_gateways_sdk.gateways.zibal.data import ZibalCardConfig, ZibalConfig
 from payment_gateways_sdk.gateways.zibal.helpers import (
     build_card_request_payload,
     build_request_payload,
@@ -33,10 +33,9 @@ class ZibalAsync:
         self,
         merchant: str = SANDBOX_MERCHANT,
         *,
-        check_mobile_with_card: bool = True,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
-        self.config = ZibalConfig(merchant=merchant, check_mobile_with_card=check_mobile_with_card)
+        self.config = ZibalConfig(merchant=merchant)
         self.timeout = timeout
 
     async def make_payment_request(self, data: PaymentRequest) -> PaymentResponse:
@@ -61,10 +60,22 @@ class ZibalAsync:
 
 
 class ZibalCardAsync(ZibalAsync):
+    def __init__(
+        self,
+        merchant: str = SANDBOX_MERCHANT,
+        *,
+        check_mobile_with_card: bool = True,
+        timeout: float = DEFAULT_TIMEOUT,
+    ) -> None:
+        super().__init__(merchant, timeout=timeout)
+        self.card_config = ZibalCardConfig(
+            merchant=merchant, check_mobile_with_card=check_mobile_with_card
+        )
+
     async def make_card_payment_request(self, data: CardPaymentRequest) -> PaymentResponse:
         raw = await apost_json(
             REQUEST_URL,
-            build_card_request_payload(self.config, data),
+            build_card_request_payload(self.card_config, data),
             gateway=self.name,
             timeout=self.timeout,
         )

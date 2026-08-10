@@ -28,6 +28,7 @@ from payment_gateways_sdk.gateways.parsian.constants import (
 )
 from payment_gateways_sdk.gateways.parsian.data import (
     ParsianCallbackDetails,
+    ParsianCardConfig,
     ParsianConfig,
     ParsianConfirmDetails,
     ParsianSaleDetails,
@@ -116,9 +117,7 @@ def build_sale_request(config: ParsianConfig, data: PaymentRequest) -> dict[str,
     }
 
 
-def encrypt_pan(config: ParsianConfig, card_pan: str) -> str:
-    if not (config.aes_key.strip() and config.aes_iv.strip()):
-        raise ConfigurationError("the parsian gateway needs aes_key and aes_iv for a card payment")
+def encrypt_pan(config: ParsianCardConfig, card_pan: str) -> str:
     try:
         from Crypto.Cipher import AES  # noqa: PLC0415
         from Crypto.Util.Padding import pad  # noqa: PLC0415
@@ -142,8 +141,8 @@ def encrypt_pan(config: ParsianConfig, card_pan: str) -> str:
     return base64.b64encode(encrypted).decode("utf-8")
 
 
-def build_card_sale_request(config: ParsianConfig, data: CardPaymentRequest) -> dict[str, Any]:
-    request = build_sale_request(config, data)
+def build_card_sale_request(config: ParsianCardConfig, data: CardPaymentRequest) -> dict[str, Any]:
+    request = build_sale_request(ParsianConfig(pin=config.pin, proxy=config.proxy), data)
     request["AdditionalData"] = json.dumps(
         [{CARD_RESTRICTION_FIELD: encrypt_pan(config, data.card_pan)}]
     )

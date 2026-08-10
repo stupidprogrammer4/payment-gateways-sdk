@@ -15,7 +15,7 @@ from payment_gateways_sdk.gateways.parsian.constants import (
     SALE_OPERATION,
     SALE_WSDL,
 )
-from payment_gateways_sdk.gateways.parsian.data import ParsianConfig
+from payment_gateways_sdk.gateways.parsian.data import ParsianCardConfig, ParsianConfig
 from payment_gateways_sdk.gateways.parsian.helpers import (
     async_client,
     build_card_sale_request,
@@ -30,8 +30,8 @@ from payment_gateways_sdk.gateways.parsian.helpers import (
 class ParsianAsync:
     name = NAME
 
-    def __init__(self, pin: str, *, proxy: str = "", aes_key: str = "", aes_iv: str = "") -> None:
-        self.config = ParsianConfig(pin=pin, proxy=proxy, aes_key=aes_key, aes_iv=aes_iv)
+    def __init__(self, pin: str, *, proxy: str = "") -> None:
+        self.config = ParsianConfig(pin=pin, proxy=proxy)
 
     def warm_up(self) -> None:
         async_client(self.config, SALE_WSDL)
@@ -71,8 +71,12 @@ class ParsianAsync:
 
 
 class ParsianCardAsync(ParsianAsync):
+    def __init__(self, pin: str, aes_key: str, aes_iv: str, *, proxy: str = "") -> None:
+        super().__init__(pin, proxy=proxy)
+        self.card_config = ParsianCardConfig(pin=pin, aes_key=aes_key, aes_iv=aes_iv, proxy=proxy)
+
     async def make_card_payment_request(self, data: CardPaymentRequest) -> PaymentResponse:
-        request_data = build_card_sale_request(self.config, data)
+        request_data = build_card_sale_request(self.card_config, data)
         try:
             result = await self._call(SALE_WSDL, SALE_OPERATION, request_data)
         except PaymentError:

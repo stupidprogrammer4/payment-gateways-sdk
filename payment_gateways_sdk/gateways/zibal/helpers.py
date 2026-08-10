@@ -19,6 +19,7 @@ from payment_gateways_sdk.gateways.zibal.constants import (
     VERIFY_SUCCESS_CODES,
 )
 from payment_gateways_sdk.gateways.zibal.data import (
+    ZibalCardConfig,
     ZibalConfig,
     ZibalRequestDetails,
     ZibalVerifyDetails,
@@ -44,8 +45,8 @@ def build_request_payload(config: ZibalConfig, data: PaymentRequest) -> dict[str
     return payload
 
 
-def build_card_request_payload(config: ZibalConfig, data: CardPaymentRequest) -> dict[str, Any]:
-    payload = build_request_payload(config, data)
+def build_card_request_payload(config: ZibalCardConfig, data: CardPaymentRequest) -> dict[str, Any]:
+    payload = build_request_payload(ZibalConfig(merchant=config.merchant), data)
     payload["allowedCards"] = [normalized_pan(data.card_pan, gateway=NAME)]
     payload["checkMobileWithCard"] = config.check_mobile_with_card
     if data.national_id:
