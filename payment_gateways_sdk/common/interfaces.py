@@ -11,6 +11,7 @@ anything here, and your own gateway does not have to either.
 from typing import Protocol, runtime_checkable
 
 from payment_gateways_sdk.common.data import (
+    CardPaymentRequest,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
@@ -38,3 +39,21 @@ class ISyncPaymentGateway(Protocol):
     def make_payment_request(self, data: PaymentRequest) -> PaymentResponse: ...
 
     def verify_payment(self, data: PaymentVerification) -> VerificationResult: ...
+
+
+@runtime_checkable
+class ISyncCardPaymentGateway(Protocol):
+    name: str
+
+    def make_card_payment_request(self, data: CardPaymentRequest) -> PaymentResponse: ...
+
+    def verify_payment(self, data: PaymentVerification) -> VerificationResult: ...
+
+
+@runtime_checkable
+class IAsyncCardPaymentGateway(Protocol):
+    name: str
+
+    async def make_card_payment_request(self, data: CardPaymentRequest) -> PaymentResponse: ...
+
+    async def verify_payment(self, data: PaymentVerification) -> VerificationResult: ...

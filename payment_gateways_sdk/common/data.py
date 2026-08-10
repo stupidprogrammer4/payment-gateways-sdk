@@ -65,6 +65,12 @@ class PaymentResponse:
 
 
 @dataclass(frozen=True)
+class CardPaymentRequest(PaymentRequest):
+    card_pan: str = ""
+    national_id: str = ""
+
+
+@dataclass(frozen=True)
 class PaymentVerification:
     """What you hand a gateway to confirm a payment after the customer comes back."""
 

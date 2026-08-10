@@ -28,6 +28,17 @@ def as_text(value: Any) -> str | None:
     return text or None
 
 
+def normalized_pan(card_pan: str, *, gateway: str) -> str:
+    digits = "".join(ch for ch in str(card_pan or "") if ch.isdigit())
+    if not digits:
+        raise ConfigurationError(f"the {gateway} gateway needs a card_pan for a card payment")
+    if len(digits) != 16:
+        raise ConfigurationError(
+            f"the {gateway} gateway needs a 16-digit card_pan; got {len(digits)} digits"
+        )
+    return digits
+
+
 def numeric_order_id(order_id: str, *, gateway: str) -> int:
     """The order reference as an integer, for gateways whose order field is a 64-bit int.
 
