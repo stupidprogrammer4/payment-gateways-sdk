@@ -48,10 +48,11 @@ sadad = ["pycryptodome>=3.20"]
 # Parsian is the only SOAP gateway. zeep's `async` extra supplies the async transport that
 # ParsianAsync awaits; it pulls in httpx, which is zeep's own async client.
 parsian = ["zeep[async]>=4.2"]
+card = ["pycryptodome>=3.20"]
 # SOCKS proxies (Parsian's optional `proxy` credential) need a SOCKS-capable client on both
 # engines. Plain http:// and https:// proxies work without this.
 socks = ["httpx[socks]>=0.27", "requests[socks]>=2.31"]
-all = ["payment-gateways-sdk[parsian,sadad,socks]"]
+all = ["payment-gateways-sdk[card,parsian,sadad,socks]"]
 
 [project.urls]
 Homepage = "https://github.com/stupidprogrammer4/payment-gateways-sdk"

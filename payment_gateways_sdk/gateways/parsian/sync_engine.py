@@ -3,6 +3,7 @@
 from typing import Any
 
 from payment_gateways_sdk.common.data import (
+    CardPaymentRequest,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
@@ -18,6 +19,7 @@ from payment_gateways_sdk.gateways.parsian.constants import (
 )
 from payment_gateways_sdk.gateways.parsian.data import ParsianConfig
 from payment_gateways_sdk.gateways.parsian.helpers import (
+    build_card_sale_request,
     build_confirm_request,
     build_sale_request,
     callback_declined,
@@ -30,8 +32,8 @@ from payment_gateways_sdk.gateways.parsian.helpers import (
 class ParsianSync:
     name = NAME
 
-    def __init__(self, pin: str, *, proxy: str = "") -> None:
-        self.config = ParsianConfig(pin=pin, proxy=proxy)
+    def __init__(self, pin: str, *, proxy: str = "", aes_key: str = "", aes_iv: str = "") -> None:
+        self.config = ParsianConfig(pin=pin, proxy=proxy, aes_key=aes_key, aes_iv=aes_iv)
 
     def _call(self, wsdl: str, operation: str, request_data: dict[str, Any]) -> Any:
         client = sync_client(self.config, wsdl)
@@ -64,3 +66,15 @@ class ParsianSync:
         except Exception as exc:  # noqa: BLE001 — verify must never crash a returning payer
             return VerificationResult(success=False, message=f"parsian confirm failed: {exc}")
         return parse_confirm_result(result, data)
+
+
+class ParsianCardSync(ParsianSync):
+    def make_card_payment_request(self, data: CardPaymentRequest) -> PaymentResponse:
+        request_data = build_card_sale_request(self.config, data)
+        try:
+            result = self._call(SALE_WSDL, SALE_OPERATION, request_data)
+        except PaymentError:
+            raise
+        except Exception as exc:
+            raise GatewayError(f"parsian request failed: {exc}") from exc
+        return parse_sale_result(result)

@@ -8,6 +8,8 @@ from payment_gateways_sdk.common.exceptions import ConfigurationError
 class ParsianConfig:
     pin: str
     proxy: str = ""
+    aes_key: str = ""
+    aes_iv: str = ""
 
     def __post_init__(self) -> None:
         if not str(self.pin or "").strip():

@@ -15,3 +15,5 @@ REQUEST_WRAPPER = "requestData"
 
 #: PEC's "no error" status, on both operations.
 SUCCESS_STATUS = 0
+
+CARD_RESTRICTION_FIELD = "ph"

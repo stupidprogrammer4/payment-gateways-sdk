@@ -1,14 +1,27 @@
+import base64
+import json
 from typing import Any
 
 from payment_gateways_sdk.common.data import (
+    CardPaymentRequest,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
     VerificationResult,
 )
-from payment_gateways_sdk.common.exceptions import DependencyError, GatewayError
-from payment_gateways_sdk.common.utils import as_int, as_text, numeric_order_id
+from payment_gateways_sdk.common.exceptions import (
+    ConfigurationError,
+    DependencyError,
+    GatewayError,
+)
+from payment_gateways_sdk.common.utils import (
+    as_int,
+    as_text,
+    normalized_pan,
+    numeric_order_id,
+)
 from payment_gateways_sdk.gateways.parsian.constants import (
+    CARD_RESTRICTION_FIELD,
     NAME,
     REDIRECT_URL,
     SUCCESS_STATUS,
@@ -101,6 +114,40 @@ def build_sale_request(config: ParsianConfig, data: PaymentRequest) -> dict[str,
         "AdditionalData": data.description or "",
         "Originator": data.mobile or "",
     }
+
+
+def encrypt_pan(config: ParsianConfig, card_pan: str) -> str:
+    if not (config.aes_key.strip() and config.aes_iv.strip()):
+        raise ConfigurationError("the parsian gateway needs aes_key and aes_iv for a card payment")
+    try:
+        from Crypto.Cipher import AES  # noqa: PLC0415
+        from Crypto.Util.Padding import pad  # noqa: PLC0415
+    except ImportError as exc:
+        raise DependencyError(
+            "parsian card payments need AES from 'pycryptodome' — "
+            "install it with: pip install 'payment-gateways-sdk[card]'"
+        ) from exc
+    digits = normalized_pan(card_pan, gateway=NAME)
+    try:
+        cipher = AES.new(
+            base64.b64decode(config.aes_key.strip()),
+            AES.MODE_CBC,
+            base64.b64decode(config.aes_iv.strip()),
+        )
+        encrypted = cipher.encrypt(pad(digits.encode("utf-8"), AES.block_size))
+    except Exception as exc:
+        raise ConfigurationError(
+            f"parsian could not encrypt the card — are aes_key and aes_iv valid base64? {exc}"
+        ) from exc
+    return base64.b64encode(encrypted).decode("utf-8")
+
+
+def build_card_sale_request(config: ParsianConfig, data: CardPaymentRequest) -> dict[str, Any]:
+    request = build_sale_request(config, data)
+    request["AdditionalData"] = json.dumps(
+        [{CARD_RESTRICTION_FIELD: encrypt_pan(config, data.card_pan)}]
+    )
+    return request
 
 
 def build_confirm_request(config: ParsianConfig, token: int) -> dict[str, Any]:
