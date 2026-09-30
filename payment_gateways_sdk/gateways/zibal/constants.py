@@ -4,6 +4,7 @@ NAME = "zibal"
 
 REQUEST_URL = "https://gateway.zibal.ir/v1/request"
 VERIFY_URL = "https://gateway.zibal.ir/v1/verify"
+INQUIRY_URL = "https://gateway.zibal.ir/v1/inquiry"
 START_URL = "https://gateway.zibal.ir/start/{track_id}"
 
 #: Zibal's public sandbox merchant. Auto-succeeds; cannot route a real rial anywhere.

@@ -3,6 +3,9 @@
 from payment_gateways_sdk.common.constants import DEFAULT_TIMEOUT
 from payment_gateways_sdk.common.data import (
     CardPaymentRequest,
+    InquiryResult,
+    PaymentInquiry,
+    PaymentInquiryStatus,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
@@ -11,6 +14,7 @@ from payment_gateways_sdk.common.data import (
 from payment_gateways_sdk.common.exceptions import PaymentError
 from payment_gateways_sdk.common.http import apost_json
 from payment_gateways_sdk.gateways.zibal.constants import (
+    INQUIRY_URL,
     NAME,
     REQUEST_URL,
     SANDBOX_MERCHANT,
@@ -19,8 +23,10 @@ from payment_gateways_sdk.gateways.zibal.constants import (
 from payment_gateways_sdk.gateways.zibal.data import ZibalCardConfig, ZibalConfig
 from payment_gateways_sdk.gateways.zibal.helpers import (
     build_card_request_payload,
+    build_inquiry_payload,
     build_request_payload,
     build_verify_payload,
+    parse_inquiry_response,
     parse_request_response,
     parse_verify_response,
 )
@@ -57,6 +63,23 @@ class ZibalAsync:
         except PaymentError as exc:
             return VerificationResult(success=False, message=str(exc))
         return parse_verify_response(raw, data)
+
+    async def inquire_payment(self, data: PaymentInquiry) -> InquiryResult:
+        try:
+            payload = build_inquiry_payload(self.config, data)
+        except (TypeError, ValueError):
+            return InquiryResult(status=PaymentInquiryStatus.UNKNOWN, message="bad trackId")
+        try:
+            raw = await apost_json(
+                INQUIRY_URL,
+                payload,
+                gateway=self.name,
+                timeout=self.timeout,
+                require_http_success=True,
+            )
+        except PaymentError as exc:
+            return InquiryResult(status=PaymentInquiryStatus.UNKNOWN, message=str(exc))
+        return parse_inquiry_response(raw, data)
 
 
 class ZibalCardAsync(ZibalAsync):

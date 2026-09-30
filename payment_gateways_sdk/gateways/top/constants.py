@@ -7,6 +7,7 @@ NAME = "top"
 BASE_URL = "https://pay.top.ir/api/WPG"
 REQUEST_URL = f"{BASE_URL}/CreateOrder"
 VERIFY_URL = f"{BASE_URL}/ConfirmPurchase"
+INQUIRY_URL = f"{BASE_URL}/TransactionEnquiry"
 
 #: Top timestamps are local Tehran time, not UTC.
 TEHRAN = ZoneInfo("Asia/Tehran")

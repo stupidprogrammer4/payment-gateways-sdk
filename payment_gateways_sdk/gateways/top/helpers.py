@@ -5,6 +5,9 @@ from datetime import datetime
 from typing import Any
 
 from payment_gateways_sdk.common.data import (
+    InquiryResult,
+    PaymentInquiry,
+    PaymentInquiryStatus,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
@@ -18,7 +21,12 @@ from payment_gateways_sdk.gateways.top.constants import (
     TEHRAN,
     TIMESTAMP_FORMAT,
 )
-from payment_gateways_sdk.gateways.top.data import TopConfig, TopRequestDetails, TopVerifyDetails
+from payment_gateways_sdk.gateways.top.data import (
+    TopConfig,
+    TopInquiryDetails,
+    TopRequestDetails,
+    TopVerifyDetails,
+)
 
 
 def now() -> str:
@@ -117,6 +125,47 @@ def parse_verify_response(raw: dict[str, Any], data: PaymentVerification) -> Ver
         success=True,
         reference=details.rrn or data.authority,
         amount=settled_amount,
+        raw=raw,
+        details=details,
+    )
+
+
+def _inquiry_number(value: object) -> int | None:
+    if type(value) is int:
+        return value
+    if isinstance(value, str) and value.strip().lstrip("-").isdigit():
+        return int(value.strip())
+    return None
+
+
+def parse_inquiry_response(raw: dict[str, Any], data: PaymentInquiry) -> InquiryResult:
+    body = _body(raw)
+    details = TopInquiryDetails(
+        status=_inquiry_number(raw.get("status")),
+        result_id=_inquiry_number(body.get("resultId")),
+        amount=_inquiry_number(body.get("amount")),
+        transaction_id=as_text(body.get("transactionId")),
+        result_description=as_text(body.get("resultDesc")),
+    )
+    if details.status == SUCCESS_STATUS and details.result_id == 0:
+        if details.amount == data.amount and details.transaction_id:
+            return InquiryResult(
+                status=PaymentInquiryStatus.PAID_UNVERIFIED,
+                reference=details.transaction_id,
+                amount=details.amount,
+                message=details.result_description,
+                raw=raw,
+                details=details,
+            )
+        return InquiryResult(
+            status=PaymentInquiryStatus.UNKNOWN,
+            message="top inquiry amount mismatch or missing transaction id",
+            raw=raw,
+            details=details,
+        )
+    return InquiryResult(
+        status=PaymentInquiryStatus.UNKNOWN,
+        message=details.result_description,
         raw=raw,
         details=details,
     )

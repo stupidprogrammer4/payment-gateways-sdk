@@ -2,6 +2,8 @@ from typing import Protocol, runtime_checkable
 
 from payment_gateways_sdk.common.data import (
     CardPaymentRequest,
+    InquiryResult,
+    PaymentInquiry,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
@@ -47,3 +49,13 @@ class IAsyncCardPaymentGateway(Protocol):
     async def make_card_payment_request(self, data: CardPaymentRequest) -> PaymentResponse: ...
 
     async def verify_payment(self, data: PaymentVerification) -> VerificationResult: ...
+
+
+@runtime_checkable
+class IAsyncPaymentInquiryGateway(Protocol):
+    async def inquire_payment(self, data: PaymentInquiry) -> InquiryResult: ...
+
+
+@runtime_checkable
+class ISyncPaymentInquiryGateway(Protocol):
+    def inquire_payment(self, data: PaymentInquiry) -> InquiryResult: ...

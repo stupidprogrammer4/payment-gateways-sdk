@@ -39,3 +39,14 @@ class ZibalVerifyDetails(GatewayDetails):
 class ZibalCardConfig:
     merchant: str = SANDBOX_MERCHANT
     check_mobile_with_card: bool = True
+
+
+@dataclass(frozen=True)
+class ZibalInquiryDetails(GatewayDetails):
+    result: int | None = None
+    status: int | None = None
+    order_id: str | None = None
+    amount: int | None = None
+    ref_number: str | None = None
+    paid_at: str | None = None
+    verified_at: str | None = None

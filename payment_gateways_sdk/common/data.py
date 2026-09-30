@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 
@@ -84,3 +85,28 @@ class VerificationResult:
 
     def __bool__(self) -> bool:
         return self.success
+
+
+class PaymentInquiryStatus(str, Enum):
+    VERIFIED = "verified"
+    PAID_UNVERIFIED = "paid_unverified"
+    PENDING = "pending"
+    FAILED = "failed"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True)
+class PaymentInquiry:
+    authority: str
+    amount: int
+    order_id: str = ""
+
+
+@dataclass(frozen=True)
+class InquiryResult:
+    status: PaymentInquiryStatus
+    reference: str | None = None
+    amount: int | None = None
+    message: str | None = None
+    raw: dict[str, Any] = field(default_factory=dict)
+    details: GatewayDetails | None = None

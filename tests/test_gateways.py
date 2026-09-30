@@ -178,6 +178,39 @@ def test_zibal_verify_fails_closed_without_an_amount(stub: Stub) -> None:
     assert "cannot confirm" in (verified.message or "")
 
 
+@pytest.mark.parametrize("result", [100, 201])
+@pytest.mark.parametrize("reference", [None, True, 1.5, "not-a-reference", 0])
+def test_zibal_verify_requires_real_bank_reference(
+    stub: Stub, result: int, reference: object
+) -> None:
+    stub.reply(
+        "/zibal/verify",
+        {"result": result, "amount": AMOUNT, "refNumber": reference},
+    )
+    verified = ZibalSync().verify_payment(a_verification("424242"))
+    assert not verified.success
+    assert verified.reference is None
+
+
+@pytest.mark.parametrize("amount", [True, float(AMOUNT), "1.5"])
+def test_zibal_verify_rejects_non_integer_amount(stub: Stub, amount: object) -> None:
+    stub.reply(
+        "/zibal/verify",
+        {"result": 100, "amount": amount, "refNumber": 999},
+    )
+    verified = ZibalSync().verify_payment(a_verification("424242"))
+    assert not verified.success
+
+
+def test_zibal_verify_rejects_another_order_id(stub: Stub) -> None:
+    stub.reply(
+        "/zibal/verify",
+        {"result": 100, "amount": AMOUNT, "refNumber": 999, "orderId": "another-order"},
+    )
+    verified = ZibalSync().verify_payment(a_verification("424242"))
+    assert not verified.success
+
+
 def test_zibal_verify_rejects_a_non_numeric_track_id(stub: Stub) -> None:
     verified = ZibalSync().verify_payment(a_verification("not-a-number"))
     assert not verified.success

@@ -3,6 +3,9 @@
 from payment_gateways_sdk.common.constants import DEFAULT_TIMEOUT as DEFAULT_TIMEOUT
 from payment_gateways_sdk.common.data import CardPaymentRequest as CardPaymentRequest
 from payment_gateways_sdk.common.data import GatewayDetails as GatewayDetails
+from payment_gateways_sdk.common.data import InquiryResult as InquiryResult
+from payment_gateways_sdk.common.data import PaymentInquiry as PaymentInquiry
+from payment_gateways_sdk.common.data import PaymentInquiryStatus as PaymentInquiryStatus
 from payment_gateways_sdk.common.data import PaymentRequest as PaymentRequest
 from payment_gateways_sdk.common.data import PaymentResponse as PaymentResponse
 from payment_gateways_sdk.common.data import PaymentVerification as PaymentVerification
@@ -17,6 +20,12 @@ from payment_gateways_sdk.common.interfaces import (
 )
 from payment_gateways_sdk.common.interfaces import IAsyncPaymentGateway as IAsyncPaymentGateway
 from payment_gateways_sdk.common.interfaces import (
+    IAsyncPaymentInquiryGateway as IAsyncPaymentInquiryGateway,
+)
+from payment_gateways_sdk.common.interfaces import (
     ISyncCardPaymentGateway as ISyncCardPaymentGateway,
 )
 from payment_gateways_sdk.common.interfaces import ISyncPaymentGateway as ISyncPaymentGateway
+from payment_gateways_sdk.common.interfaces import (
+    ISyncPaymentInquiryGateway as ISyncPaymentInquiryGateway,
+)

@@ -1,5 +1,8 @@
 from payment_gateways_sdk.common.data import CardPaymentRequest as CardPaymentRequest
 from payment_gateways_sdk.common.data import GatewayDetails as GatewayDetails
+from payment_gateways_sdk.common.data import InquiryResult as InquiryResult
+from payment_gateways_sdk.common.data import PaymentInquiry as PaymentInquiry
+from payment_gateways_sdk.common.data import PaymentInquiryStatus as PaymentInquiryStatus
 from payment_gateways_sdk.common.data import PaymentRequest as PaymentRequest
 from payment_gateways_sdk.common.data import PaymentResponse as PaymentResponse
 from payment_gateways_sdk.common.data import PaymentVerification as PaymentVerification
@@ -14,9 +17,15 @@ from payment_gateways_sdk.common.interfaces import (
 )
 from payment_gateways_sdk.common.interfaces import IAsyncPaymentGateway as IAsyncPaymentGateway
 from payment_gateways_sdk.common.interfaces import (
+    IAsyncPaymentInquiryGateway as IAsyncPaymentInquiryGateway,
+)
+from payment_gateways_sdk.common.interfaces import (
     ISyncCardPaymentGateway as ISyncCardPaymentGateway,
 )
 from payment_gateways_sdk.common.interfaces import ISyncPaymentGateway as ISyncPaymentGateway
+from payment_gateways_sdk.common.interfaces import (
+    ISyncPaymentInquiryGateway as ISyncPaymentInquiryGateway,
+)
 from payment_gateways_sdk.gateways import ParsianAsync as ParsianAsync
 from payment_gateways_sdk.gateways import ParsianCardAsync as ParsianCardAsync
 from payment_gateways_sdk.gateways import ParsianCardSync as ParsianCardSync
@@ -46,4 +55,4 @@ from payment_gateways_sdk.gateways import get_async_gateway as get_async_gateway
 from payment_gateways_sdk.gateways import get_sync_card_gateway as get_sync_card_gateway
 from payment_gateways_sdk.gateways import get_sync_gateway as get_sync_gateway
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

@@ -30,6 +30,7 @@ def post_json(
     gateway: str,
     headers: dict[str, str] | None = None,
     timeout: float = DEFAULT_TIMEOUT,
+    require_http_success: bool = False,
 ) -> dict[str, Any]:
     """POST JSON and return the decoded object. Sync engine, over ``requests``."""
     try:
@@ -40,6 +41,8 @@ def post_json(
         raise NetworkError(f"{gateway} did not answer within {timeout}s") from exc
     except requests.RequestException as exc:
         raise NetworkError(f"{gateway} request failed: {exc}") from exc
+    if require_http_success and not 200 <= response.status_code < 300:
+        raise NetworkError(f"{gateway} inquiry answered HTTP {response.status_code}")
     return _decode(response.text, response.status_code, gateway)
 
 
@@ -50,6 +53,7 @@ async def apost_json(
     gateway: str,
     headers: dict[str, str] | None = None,
     timeout: float = DEFAULT_TIMEOUT,
+    require_http_success: bool = False,
 ) -> dict[str, Any]:
     """POST JSON and return the decoded object. Async engine, over ``aiohttp``."""
     client_timeout = aiohttp.ClientTimeout(total=timeout)
@@ -66,4 +70,6 @@ async def apost_json(
         raise NetworkError(f"{gateway} did not answer within {timeout}s") from exc
     except aiohttp.ClientError as exc:
         raise NetworkError(f"{gateway} request failed: {exc}") from exc
+    if require_http_success and not 200 <= status < 300:
+        raise NetworkError(f"{gateway} inquiry answered HTTP {status}")
     return _decode(text, status, gateway)

@@ -189,11 +189,36 @@ result.details.status_text  # Zibal: its status code, decoded
 | Sadad | `SadadRequestDetails` · `SadadVerifyDetails` — `retrival_ref_no`, `system_trace_no` |
 | Parsian | `ParsianSaleDetails` · `ParsianConfirmDetails` · `ParsianCallbackDetails` — `card_number_masked`, `rrn` |
 
+## Checking an uncertain payment
+
+`ZibalSync` / `ZibalAsync` and `TopSync` / `TopAsync` implement the optional
+`ISyncPaymentInquiryGateway` / `IAsyncPaymentInquiryGateway` contract. Call
+`inquire_payment(PaymentInquiry(authority=stored_token, amount=stored_amount,
+order_id=stored_order_id))` against the token from your own database. The result
+status is one of `VERIFIED`, `PAID_UNVERIFIED`, `PENDING`, `FAILED`, or `UNKNOWN`.
+Only Zibal's `VERIFIED` inquiry can attest a confirmed payment; `PAID_UNVERIFIED`
+still needs `verify_payment`. TOP's `TransactionEnquiry` always reports at most
+`PAID_UNVERIFIED`: a successful `ConfirmPurchase` is needed before delivery.
+Missing or mismatched amounts, mismatched Zibal order IDs, transport failures and
+ambiguous responses stay `UNKNOWN`. Never use inquiry `result=100` or an HTTP 200
+alone as proof of payment. TOP inquiry may contain personal identity fields in
+`raw`; do not log or persist that raw object.
+
+Sepehr's published manual calls repeat `Advice` an inquiry/reconfirmation. The
+existing `verify_payment` already sends Advice and accepts its `OK`/`Duplicate`
+outcomes after checking the returned amount. It requires the callback's
+`digitalreceipt`; the token alone cannot recover a missing callback. Parsian has
+no documented read-only status operation in its published sale/confirm WSDLs.
+
+Provider references: [Zibal IPG OpenAPI](https://api.zibal.ir/static/helpdocs/ipg.json),
+[TOP WPG Swagger](https://pay.top.ir/api/swagger/index.html), and
+[Sepehr IPG manual v3, pages 21–22](https://sepehrpay.com/wp-content/uploads/2024/08/SepehrPay-Gateway-Manual-3.0.0-Token.pdf).
+
 ## Errors
 
 **Opening a payment raises. Verifying one does not.**
 
-That asymmetry is deliberate. A failure while opening means no payment exists at the gateway, so failing loudly stops you redirecting a customer into nothing. A failure while verifying may concern money that already moved, so it comes back as a result you can retry from and reconcile — never as an exception in front of a returning payer.
+That asymmetry is deliberate. A failed opening request gives you no usable redirect; a timeout does not prove the gateway created nothing, so retain the uncertain request for reconciliation before retrying. A failure while verifying may concern money that already moved, so it comes back as a result you can retry from and reconcile — never as an exception in front of a returning payer.
 
 ```python
 from payment_gateways_sdk import (

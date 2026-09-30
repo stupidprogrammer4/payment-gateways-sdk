@@ -2,6 +2,9 @@
 
 from payment_gateways_sdk.common.constants import DEFAULT_TIMEOUT
 from payment_gateways_sdk.common.data import (
+    InquiryResult,
+    PaymentInquiry,
+    PaymentInquiryStatus,
     PaymentRequest,
     PaymentResponse,
     PaymentVerification,
@@ -9,12 +12,13 @@ from payment_gateways_sdk.common.data import (
 )
 from payment_gateways_sdk.common.exceptions import ConfigurationError, PaymentError
 from payment_gateways_sdk.common.http import apost_json
-from payment_gateways_sdk.gateways.top.constants import NAME, REQUEST_URL, VERIFY_URL
+from payment_gateways_sdk.gateways.top.constants import INQUIRY_URL, NAME, REQUEST_URL, VERIFY_URL
 from payment_gateways_sdk.gateways.top.data import TopConfig
 from payment_gateways_sdk.gateways.top.helpers import (
     auth_headers,
     build_request_payload,
     build_verify_payload,
+    parse_inquiry_response,
     parse_request_response,
     parse_verify_response,
 )
@@ -55,3 +59,19 @@ class TopAsync:
         except PaymentError as exc:
             return VerificationResult(success=False, message=str(exc))
         return parse_verify_response(raw, data)
+
+    async def inquire_payment(self, data: PaymentInquiry) -> InquiryResult:
+        if not data.authority:
+            return InquiryResult(status=PaymentInquiryStatus.UNKNOWN, message="missing token")
+        try:
+            raw = await apost_json(
+                INQUIRY_URL,
+                {"token": data.authority},
+                gateway=self.name,
+                headers=auth_headers(self.config),
+                timeout=self.timeout,
+                require_http_success=True,
+            )
+        except PaymentError as exc:
+            return InquiryResult(status=PaymentInquiryStatus.UNKNOWN, message=str(exc))
+        return parse_inquiry_response(raw, data)

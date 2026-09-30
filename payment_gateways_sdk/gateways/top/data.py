@@ -38,3 +38,12 @@ class TopVerifyDetails(GatewayDetails):
     amount: int | None = None
     card_number: str | None = None
     transaction_date: str | None = None
+
+
+@dataclass(frozen=True)
+class TopInquiryDetails(GatewayDetails):
+    status: int | None = None
+    result_id: int | None = None
+    amount: int | None = None
+    transaction_id: str | None = None
+    result_description: str | None = None
